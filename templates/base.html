@@ -8,7 +8,7 @@
         <title>Library Manager: {% block title %}{% endblock %}</title>
     </head>
     <body>
-        <!-- Navbar -->
+        <!-- TODO: Navbar -->
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <a class="navbar-brand" href="/">Library Manager</a>
             <ul class="navbar-nav mr-auto">
@@ -18,6 +18,8 @@
             </ul>
         </nav>
 
-        {% block body %}{% endblock %}
+        <main class="container p-5">
+            {% block body %}{% endblock %}
+        </main>
     </body>
 </html>
