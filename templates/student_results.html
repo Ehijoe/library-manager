@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}{{title}}{% endblock %}
+
+{% block body %}
+    {% if students|length > 0 %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Admission No</th>
+                <th>First Name</th>
+                <th>Middle Name</th>
+                <th>Surname</th>
+                <th>Class</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+                <tr>
+                    <td>{{student["admission_no"]}}</td>
+                    <td>{{student["first_name"]}}</td>
+                    <td>{{student["middle_name"]}}</td>
+                    <td>{{student["surname"]}}</td>
+                    <td>{{student["class"]}}</td>
+                    <td>
+                        <form action="{{action}}" method="post">
+                            <button class="btn btn-danger" name="admission_no" value="{{student['admission_no']}}" type="submit">{{title}}</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p class="alert alert-secondary" role="alert">No Matching Students</p>
+    {% endif %}
+{% endblock %}
