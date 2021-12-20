@@ -21,7 +21,7 @@ CREATE TABLE staff (
 );
 
 CREATE TABLE students (
-    admission_no INTEGER PRIMARY KEY NOT NULL,
+    admission_no INT PRIMARY KEY NOT NULL,
     person_id INT UNIQUE NOT NULL,
     class TEXT NOT NULL
 );

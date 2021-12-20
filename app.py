@@ -90,13 +90,41 @@ def students(action=None):
     if request.method == "POST":
         # If a student was added
         if action == "add":
-            # Check if all the fields were given
-            for key in ["firstname", 'middlename', 'surname', 'birthdate', 'class']:
+            form = {}
+            # Check if the required fields were given
+            for key in ["admission_no", "firstname", 'middlename', 'surname', 'birthdate', 'class']:
                 if request.form[key] in ("", None):
                     return "TODO: Error"
+                else:
+                    form[key] = request.form[key].strip()
             
-            # Check if there
-            return ""
+            # Check if the admission number is a valid number
+            try:
+                form["admission_no"] = int(form["admission_no"])
+            except ValueError:
+                return "TODO: Error"
+
+            # Check if the class is a valid class
+            if form["class"] not in CLASSES:
+                return "TODO: Error"
+
+            # Check if there is a person with the same name
+            cursor.execute("SELECT id FROM people WHERE first_name LIKE ? and surname LIKE ?", (request.form["firstname"], request.form["surname"]))
+            person_id = cursor.fetchone()
+            if person_id == None:
+                # Create a new person
+                cursor.execute(
+                    """INSERT INTO people (first_name, middle_name, surname, birthdate) VALUES (?, ?, ?, ?)""",
+                    (request.form["firstname"], request.form["middlename"], request.form["surname"], request.form["birthdate"]))
+                person_id = cursor.lastrowid
+            else:
+                person_id = person_id["id"]
+
+            # Insert the new student
+            cursor.execute("INSERT INTO students (admission_no, person_id, class) VALUES (?, ?, ?)", (form["admission_no"], person_id, form["class"]))
+            connection.commit()
+
+            return redirect("/students/add")
         
         if action == "remove":
             return "TODO"

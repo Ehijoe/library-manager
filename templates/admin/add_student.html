@@ -4,7 +4,8 @@
 
 {% block body %}
     <form action="/students/add" method="post">
-        <input autocomplete="off" autofocus class="form-control" name="firstname" placeholder="First Name" type="text">
+        <input autocomplete="off" autofocus class="form-control" name="admission_no" min="0" placeholder="Addmission Number" type="number">
+        <input autocomplete="off" class="form-control" name="firstname" placeholder="First Name" type="text">
         <input autocomplete="off" class="form-control" name="middlename" placeholder="Middle Name" type="text">
         <input autocomplete="off" class="form-control" name="surname" placeholder="Surname" type="text">
         <input class="form-control" name="birthdate" type="date">
