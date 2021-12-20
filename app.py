@@ -1,15 +1,20 @@
 # Import external libraries
 from sqlite3.dbapi2 import Cursor
-from flask import Flask, session, render_template, redirect, request
+from flask import Flask, session, render_template, redirect, request, url_for
 import sqlite3
 import os
 from werkzeug.security import check_password_hash, generate_password_hash
+from functools import wraps
 
 # App configuration
 app = Flask(__name__)
 app.secret_key = b"21#$^7isdg843!^#49dcmge394gn4390" # TODO: store as an environment variable
 
 db = "library.sqlite"
+
+# Global variables
+CLASSES = ("Pre Basic 7", "Basic7", "Basic 8", "Basic 9", "SS 1", "SS 2", "SS 3")
+
 
 # Check if database exists
 database_exists = os.path.isfile(db)
@@ -27,10 +32,19 @@ else:
         cursor.executescript(schema.read())
 
 
+def is_admin(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get("role") != "admin":
+            return redirect("/login")
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 @app.route("/")
 def index():
     if session.get("role") == "admin":
-        return "TODO!!"
+        return render_template("admin/home.html")
     
     return redirect("/login")
 
@@ -66,6 +80,36 @@ def login():
     
     # If it is a get request display the form for login
     return render_template("login.html")
+
+
+@app.route("/students", defaults={"action": "choose"})
+@app.route("/students/<action>", methods=["GET", "POST"])
+@is_admin
+def students(action=None):
+    # If it is a post request handle check what type it is
+    if request.method == "POST":
+        # If a student was added
+        if action == "add":
+            # Check if all the fields were given
+            for key in ["firstname", 'middlename', 'surname', 'birthdate', 'class']:
+                if request.form[key] in ("", None):
+                    return "TODO: Error"
+            
+            # Check if there
+            return ""
+        
+        if action == "remove":
+            return "TODO"
+
+    # If it is a get request determine which form to show
+    if action == "choose":
+        return render_template("admin/students.html")
+    elif action == "add":
+        return render_template("admin/add_student.html", classes=CLASSES)
+    elif action == "remove":
+        return "TODO"
+    else:
+        return "TODO"
 
 
 @app.route("/about")
