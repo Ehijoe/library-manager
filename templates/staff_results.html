@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}{{title}}{% endblock %}
+
+{% block body %}
+    {% if staff|length > 0 %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>First Name</th>
+                <th>Middle Name</th>
+                <th>Surname</th>
+                <th>Class</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for employee in staff %}
+                <tr>
+                    <td>{{employee["first_name"]}}</td>
+                    <td>{{employee["middle_name"]}}</td>
+                    <td>{{employee["surname"]}}</td>
+                    <td>{{employee["job_title"]}}</td>
+                    <td>
+                        <form action="{{action}}" method="post">
+                            <button class="btn btn-danger" name="id" value="{{employee['id']}}" type="submit">{{title}}</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p class="alert alert-secondary" role="alert">No Matching employees</p>
+    {% endif %}
+{% endblock %}

@@ -123,7 +123,9 @@ def students(action=None):
                 person_id = person_id["id"]
 
             # Insert the new student
-            cursor.execute("INSERT INTO students (admission_no, person_id, class) VALUES (?, ?, ?)", (form["admission_no"], person_id, form["class"]))
+            cursor.execute(
+                """INSERT INTO students (admission_no, person_id, class) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE class = ?""",
+                (form["admission_no"], person_id, form["class"], form["class"]))
             connection.commit()
 
             return redirect("/students/add")
@@ -143,10 +145,6 @@ def students(action=None):
                     search_keys[key] = admission_no
                 if request.form.get(key) not in ["", None]:
                     search_keys[key] = request.form.get(key).strip()
-
-            # Ensure there is at least one search key
-            if len(search_keys) < 1:
-                return "TODO: Error"
 
             # Generate the query to select relevant students
             beginning = "SELECT * FROM people JOIN students ON people.id=students.person_id WHERE "
@@ -173,6 +171,83 @@ def students(action=None):
         return render_template("admin/add_student.html", classes=CLASSES)
     elif action == "remove":
         return render_template("student_search.html", classes=CLASSES, title="Remove Student", action="/students/remove")
+    else:
+        return "TODO: Invalid action"
+
+
+@app.route("/staff", defaults={"action": "choose"})
+@app.route("/staff/<action>", methods=["GET", "POST"])
+@is_admin
+def staff(action=None):
+    # If it is a post request handle check what type it is
+    if request.method == "POST":
+        # If a staff was added
+        if action == "add":
+            form = {}
+            # Check if the required fields were given
+            for key in ["firstname", 'middlename', 'surname', 'birthdate', 'job_title']:
+                if request.form[key] in ("", None):
+                    return "TODO: Error"
+                else:
+                    form[key] = request.form[key].strip()
+
+            # Check if there is a person with the same name
+            cursor.execute("SELECT id FROM people WHERE first_name LIKE ? and surname LIKE ?", (form["firstname"], form["surname"]))
+            person_id = cursor.fetchone()
+            if person_id == None:
+                # Create a new person
+                cursor.execute(
+                    """INSERT INTO people (first_name, middle_name, surname, birthdate) VALUES (?, ?, ?, ?)""",
+                    (form["firstname"], form["middlename"], form["surname"], form["birthdate"]))
+                person_id = cursor.lastrowid
+            else:
+                person_id = person_id["id"]
+
+            # Insert the new staff
+            cursor.execute("SELECT COUNT(*) FROM staff WHERE person_id = ?", str(person_id))
+            if cursor.fetchone() != None:
+                cursor.execute("UPDATE staff SET job_title = ? WHERE person_id = ?", (form["job_title"], person_id))
+            else:
+                cursor.execute("""INSERT INTO staff (person_id, job_title) VALUES (?, ?)""", (person_id, form["job_title"]))
+            connection.commit()
+
+            return redirect("/staff/add")
+        
+        if action == "remove":
+            search_keys = {}
+
+            # Check which values were used in the search
+            for key in request.form:
+                if request.form.get(key) not in ["", None]:
+                    search_keys[key] = request.form.get(key).strip()
+
+            # Generate the query to select relevant staff
+            beginning = "SELECT * FROM people JOIN staff ON people.id=staff.person_id WHERE "
+            conditions = "job_title IS NOT 'Retired'"
+            for key in search_keys:
+                conditions += " AND "
+                conditions += key + " LIKE ?"
+
+            # Query the database to get the relevant students
+            cursor.execute(beginning + conditions, list(search_keys.values()))
+            staff = cursor.fetchall()
+
+            print(staff)
+
+            return render_template("staff_results.html", staff=staff, action="/staff/delete", title="Remove Staff")
+        
+        if action == "delete":
+            cursor.execute("UPDATE staff SET job_title = 'Retired' WHERE person_id = ?", request.form["id"])
+            connection.commit()
+            return redirect("/")
+
+    # If it is a get request determine which form to show
+    if action == "choose":
+        return render_template("admin/staff.html")
+    elif action == "add":
+        return render_template("admin/add_staff.html")
+    elif action == "remove":
+        return render_template("staff_search.html", title="Remove Staff", action="/staff/remove")
     else:
         return "TODO: Invalid action"
 

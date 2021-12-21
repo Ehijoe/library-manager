@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}{{title}}{% endblock %}
+
+{% block body %}
+    <form action="{{action}}" method="post">
+        <input autocomplete="off" class="form-control" name="first_name" placeholder="First Name" type="text">
+        <input autocomplete="off" class="form-control" name="middle_name" placeholder="Middle Name" type="text">
+        <input autocomplete="off" class="form-control" name="surname" placeholder="Surname" type="text">
+        <input class="form-control" name="birthdate" type="date">
+        <input autocomplete="off" class="form-control" name="job_title" placeholder="Job Title" type="text">
+        <button class="btn btn-primary" type="submit">Search</button>
+    </form>
+{% endblock %}

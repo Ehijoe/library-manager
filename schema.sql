@@ -16,7 +16,7 @@ CREATE TABLE people (
 
 CREATE TABLE staff (
     id INTEGER PRIMARY KEY NOT NULL,
-    person_id INT NOT NULL,
+    person_id INT UNIQUE NOT NULL,
     job_title TEXT NOT NULL
 );
 
