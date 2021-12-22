@@ -118,14 +118,14 @@ def students(action=None):
                 # Create a new person
                 cursor.execute(
                     """INSERT INTO people (first_name, middle_name, surname, birthdate) VALUES (?, ?, ?, ?)""",
-                    (request.form["firstname"], request.form["middlename"], request.form["surname"], request.form["birthdate"]))
+                    (form["firstname"], form["middlename"], form["surname"], request.form["birthdate"]))
                 person_id = cursor.lastrowid
             else:
                 person_id = person_id["id"]
 
             # Insert the new student
             cursor.execute(
-                """INSERT INTO students (admission_no, person_id, class) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE class = ?""",
+                """INSERT INTO students (admission_no, person_id, class) VALUES (?, ?, ?) ON CONFLICT(admission_no) DO UPDATE SET class = ?""",
                 (form["admission_no"], person_id, form["class"], form["class"]))
             connection.commit()
 
