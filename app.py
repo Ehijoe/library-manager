@@ -14,6 +14,7 @@ db = "library.sqlite"
 
 # Global variables
 CLASSES = ("Pre Basic 7", "Basic7", "Basic 8", "Basic 9", "SS 1", "SS 2", "SS 3")
+ROLES = {"librarian":"Librarian", "admin":"Administrator"}
 
 
 # Check if database exists
@@ -204,7 +205,7 @@ def staff(action=None):
                 person_id = person_id["id"]
 
             # Insert the new staff
-            cursor.execute("SELECT COUNT(*) FROM staff WHERE person_id = ?", str(person_id))
+            cursor.execute("SELECT * FROM staff WHERE person_id = ?", str(person_id))
             if cursor.fetchone() != None:
                 cursor.execute("UPDATE staff SET job_title = ? WHERE person_id = ?", (form["job_title"], person_id))
             else:
@@ -232,8 +233,6 @@ def staff(action=None):
             cursor.execute(beginning + conditions, list(search_keys.values()))
             staff = cursor.fetchall()
 
-            print(staff)
-
             return render_template("staff_results.html", staff=staff, action="/staff/delete", title="Remove Staff")
         
         if action == "delete":
@@ -248,6 +247,91 @@ def staff(action=None):
         return render_template("admin/add_staff.html")
     elif action == "remove":
         return render_template("staff_search.html", title="Remove Staff", action="/staff/remove")
+    else:
+        return "TODO: Invalid action"
+
+
+@app.route("/users", defaults={"action": "choose"})
+@app.route("/users/<action>", methods=["GET", "POST"])
+@is_admin
+def users(action=None):
+    # If it is a post request handle check what type it is
+    if request.method == "POST":
+        # If a user to be added is searched display the list of possible employees
+        if action == "add-list":
+            search_keys = {}
+
+            # Check which values were used in the search
+            for key in request.form:
+                if request.form.get(key) not in ["", None]:
+                    search_keys[key] = request.form.get(key).strip()
+
+            # Generate the query to select relevant staff
+            beginning = "SELECT * FROM people JOIN staff ON people.id=staff.person_id WHERE "
+            conditions = "job_title IS NOT 'Retired'"
+            for key in search_keys:
+                conditions += " AND "
+                conditions += key + " LIKE ?"
+
+            # Query the database to get the relevant students
+            cursor.execute(beginning + conditions, list(search_keys.values()))
+            staff = cursor.fetchall()
+
+            return render_template("staff_results.html", staff=staff, action="/users/add", title="Add User")
+
+        # If an employee to be added as a user has been selected
+        if action == "add":
+            user_info = {}
+            # Check if the required fields were given
+            for key in ["username", "password", "confirmation", "role"]:
+                if request.form.get(key) in ("", None):
+                    return render_template("admin/add_user.html", id=request.form["id"], roles=ROLES)
+                else:
+                    user_info[key] = request.form[key].strip()
+            
+            # Check if the person id is available
+            if request.form.get("id") is None:
+                return redirect("/users/add")
+            else:
+                user_info["id"] = request.form.get("id")
+            
+            # Check if the password matches the confirmation
+            if user_info["password"] != user_info["confirmation"]:
+                return "TODO"
+
+            # Check if the person is already a user
+            cursor.execute("SELECT * FROM users WHERE person_id = ?", user_info["id"])
+            if cursor.fetchone():
+                return redirect("/")
+            
+            # Check if the person chose a valid role
+            if user_info["role"] not in ROLES:
+                return "TODO"
+
+            # Add the user to the database
+            password_hash = generate_password_hash(user_info["password"])
+            cursor.execute(
+                "INSERT INTO users (username, password_hash, user_role, person_id) VALUES (?, ?, ?, ?)",
+                (user_info["username"], password_hash, user_info["role"], user_info["id"]))
+            connection.commit()
+
+            return redirect("/")
+        
+        if action == "remove":
+            cursor.execute("DELETE FROM users WHERE person_id = ?", request.form.get("id"))
+            return redirect("/users/remove")
+        
+        return "TODO"
+
+    # If it is a get request determine which form to show
+    if action == "choose":
+        return render_template("admin/users.html")
+    elif action == "add":
+        return render_template("staff_search.html", action="/users/add-list", title="Add User")
+    elif action == "remove":
+        cursor.execute("SELECT * FROM people JOIN users ON people.id=users.person_id")
+        user_list = cursor.fetchall()
+        return render_template("admin/user_list.html", users=user_list, title="Delete User", action="/users/remove", roles=ROLES)
     else:
         return "TODO: Invalid action"
 
