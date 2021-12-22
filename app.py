@@ -319,6 +319,7 @@ def users(action=None):
         
         if action == "remove":
             cursor.execute("DELETE FROM users WHERE person_id = ?", request.form.get("id"))
+            connection.commit()
             return redirect("/users/remove")
         
         return "TODO"
@@ -334,6 +335,12 @@ def users(action=None):
         return render_template("admin/user_list.html", users=user_list, title="Delete User", action="/users/remove", roles=ROLES)
     else:
         return "TODO: Invalid action"
+
+
+@app.route("/reports")
+@is_admin
+def reports():
+    return "TODO"
 
 
 @app.route("/about")
