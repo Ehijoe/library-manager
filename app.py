@@ -31,6 +31,17 @@ if database_exists:
 else:
     with open("schema.sql") as schema:
         cursor.executescript(schema.read())
+        print("Database Created")
+        # Test Users
+        cursor.execute("INSERT INTO people (id, first_name, surname) VALUES (1, 'test', 'user')")
+        cursor.execute(
+            "INSERT INTO users (username, password_hash, user_role, person_id) VALUES ('admin', ?, 'admin', 1)",
+            [generate_password_hash("test")])
+        cursor.execute(
+            "INSERT INTO users (username, password_hash, user_role, person_id) VALUES ('librarian', ?, 'librarian', 1)",
+            [generate_password_hash("test")])
+        connection.commit()
+        print("Test users made")
 
 
 def is_admin(f):
@@ -359,8 +370,37 @@ def reports():
 @is_librarian
 def add_book():
     if request.method == "POST":
-        print(request.form.items)
-        return "TODO"
+        # Check if the necessary fields are present
+        for key in ["title", "quantity"]:
+            if request.form.get(key) in ["", None]:
+                return "TODO: Error"
+        
+        # Create a form_dictionary with cleaned up values
+        form = {}
+        for key in request.form:
+            form[key] = request.form.get(key).strip()
+            if form[key] == "":
+                form[key] = None
+        
+        # Check if the book is a reference book
+        if form.get("reference"):
+            form["reference"] = 1 # True is represented by one
+        else:
+            form["reference"] = 0 # False is represented by zero
+        
+        # Check if the number of copies is a valid number
+        try:
+            form["quantity"] = int(form.get("quantity"))
+        except ValueError:
+            return "TODO: Error"
+        
+        # Add the book into the database
+        cursor.execute(
+            "INSERT INTO books (title, author, publication_date, quantity, category, reference) VALUES (?, ?, ?, ?, ?, ?)",
+            [form.get(key) for key in ("title", "author", "publication_date", "quantity", "category", "reference")])
+        connection.commit()
+
+        return redirect("/add_book")
     
     # If it is a get request display a form to add the book
     return render_template("librarian/add_book.html")

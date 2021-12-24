@@ -31,7 +31,7 @@ CREATE TABLE books (
     title TEXT NOT NULL,
     author TEXT,
     publication_date TEXT,
-    qauntity INT NOT NULL,
+    quantity INT NOT NULL,
     category TEXT,
     reference INT
 );
