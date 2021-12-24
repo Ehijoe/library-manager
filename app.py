@@ -359,6 +359,7 @@ def reports():
 @is_librarian
 def add_book():
     if request.method == "POST":
+        print(request.form.items)
         return "TODO"
     
     # If it is a get request display a form to add the book
