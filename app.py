@@ -355,10 +355,14 @@ def reports():
     return "TODO"
 
 
-@app.route("/add_book")
+@app.route("/add_book", methods=["GET", "POST"])
 @is_librarian
 def add_book():
-    return "TODO"
+    if request.method == "POST":
+        return "TODO"
+    
+    # If it is a get request display a form to add the book
+    return render_template("librarian/add_book.html")
 
 
 @app.route("/borrow")

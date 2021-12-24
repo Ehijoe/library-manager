@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Add Book{% endblock %}
+
+{% block body %}
+    <form action="/students/add" method="post">
+        <input autocomplete="off" class="form-control" name="title" placeholder="Title" type="text">
+        <input autocomplete="off" class="form-control" name="author" placeholder="Author" type="text">
+        <input class="form-control" name="publication_date" type="date">
+        <input autocomplete="off" class="form-control" name="quantity" min="1" placeholder="Number of Copies" type="number">
+        <input autocomplete="off" class="form-control" name="category" placeholder="Category" type="text">
+        <div class="form-control">
+            <input type="checkbox" id="reference" name="reference" value="True">
+            <label for="reference">Reference Book</label>
+        </div>
+        <button class="btn btn-primary" type="submit">Add Book</button>
+    </form>
+{% endblock %}
