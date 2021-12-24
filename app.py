@@ -42,10 +42,22 @@ def is_admin(f):
     return decorated_function
 
 
+def is_librarian(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get("role") != "librarian":
+            return redirect("/login")
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 @app.route("/")
 def index():
     if session.get("role") == "admin":
         return render_template("admin/home.html")
+    
+    if session.get("role") == "librarian":
+        return render_template("librarian/home.html")
     
     return redirect("/login")
 
@@ -340,6 +352,30 @@ def users(action=None):
 @app.route("/reports")
 @is_admin
 def reports():
+    return "TODO"
+
+
+@app.route("/add_book")
+@is_librarian
+def add_book():
+    return "TODO"
+
+
+@app.route("/borrow")
+@is_librarian
+def borrow():
+    return "TODO"
+
+
+@app.route("/return")
+@is_librarian
+def return_book():
+    return "TODO"
+
+
+@app.route("/damage")
+@is_librarian
+def damage():
     return "TODO"
 
 
