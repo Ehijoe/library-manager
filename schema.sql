@@ -29,8 +29,9 @@ CREATE TABLE students (
 CREATE TABLE books (
     id INTEGER PRIMARY KEY NOT NULL,
     title TEXT NOT NULL,
+    author TEXT,
     publication_date TEXT,
-    qauntity INT,
+    qauntity INT NOT NULL,
     category TEXT,
     reference INT
 );
