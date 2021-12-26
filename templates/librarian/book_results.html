@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}{{title}}{% endblock %}
+
+{% block body %}
+    {% if books|length > 0 %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Publication Date</th>
+                <th>Category</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for book in books %}
+                <tr>
+                    <td>{{book["title"]}}</td>
+                    <td>{{book["author"]}}</td>
+                    <td>{{book["publication_date"]}}</td>
+                    <td>{{book["category"]}}</td>
+                    <td>
+                        <form action="{{action}}" method="post">
+                            {% for field in extra_info %}
+                                <input name="{{field}}" value="{{extra_info[field]}}" type="hidden">
+                            {% endfor %}
+                            <button name="book_id" value="{{book['id']}}" class="btn btn-danger" type="submit">{{title}}</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p class="alert alert-secondary" role="alert">No Matching Books</p>
+    {% endif %}
+{% endblock %}

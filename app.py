@@ -5,6 +5,7 @@ import sqlite3
 import os
 from werkzeug.security import check_password_hash, generate_password_hash
 from functools import wraps
+from datetime import date, timedelta
 
 # App configuration
 app = Flask(__name__)
@@ -406,10 +407,154 @@ def add_book():
     return render_template("librarian/add_book.html")
 
 
-@app.route("/borrow")
+@app.route("/borrow", defaults={"person": "choose"})
+@app.route("/borrow/<person>", methods=["GET", "POST"])
 @is_librarian
-def borrow():
-    return "TODO"
+def borrow(person):
+    # If it is a get request display the appropriate search page for the person
+    if request.method == "GET":
+        if person == "staff":
+            return render_template("staff_search.html", title="Borrow", action="/borrow/staff")
+        
+        if person == "student":
+            return render_template("student_search.html", classes=CLASSES, title="Borrow", action="/borrow/student")
+        
+        if person == "choose":
+            return render_template("librarian/borrow.html")
+        
+        return "TODO"
+    
+    # If it is a post request display a page to find the book
+    else:
+        if person == "staff":
+            search_keys = {}
+
+            # Check which values were used in the search
+            for key in request.form:
+                if request.form.get(key) not in ["", None]:
+                    search_keys[key] = request.form.get(key).strip()
+
+            # Generate the query to select relevant staff
+            beginning = "SELECT * FROM people JOIN staff ON people.id=staff.person_id WHERE "
+            conditions = "job_title IS NOT 'Retired'"
+            for key in search_keys:
+                conditions += " AND "
+                conditions += key + " LIKE ?"
+
+            # Query the database to get the relevant students
+            cursor.execute(beginning + conditions, list(search_keys.values()))
+            staff = cursor.fetchall()
+
+            return render_template("staff_results.html", staff=staff, action="/process_borrow/staff", title="Choose Staff")
+            
+        elif person == "student":
+            search_keys = {}
+
+            # Check which values were used in the search
+            for key in request.form:
+                if key == "admission_no":
+                    try:
+                        admission_no = int(request.form[key].strip())
+                        if admission_no <= 0:
+                            raise ValueError
+                    except ValueError:
+                        continue
+                    search_keys[key] = admission_no
+                if request.form.get(key) not in ["", None]:
+                    search_keys[key] = request.form.get(key).strip()
+
+            # Generate the query to select relevant students
+            beginning = "SELECT * FROM people JOIN students ON people.id=students.person_id WHERE "
+            conditions = "class IS NOT 'Retired'"
+            for key in search_keys:
+                conditions += " AND "
+                conditions += key + " LIKE ?"
+
+            # Query the database to get the relevant students
+            cursor.execute(beginning + conditions, list(search_keys.values()))
+            students = cursor.fetchall()
+
+            return render_template("student_results.html", students=students, action="/process_borrow/student", title="Choose Student")
+        
+        else:
+            return "TODO"
+
+
+@app.route("/process_borrow/<person_role>", methods=["POST"])
+@is_librarian
+def process_borrow(person_role):
+    if person_role == "student":
+        # Get the student's person_id
+        cursor.execute("SELECT person_id FROM students WHERE admission_no = ?", request.form.get("admission_no"))
+        student = cursor.fetchone()
+
+        if not student:
+            return "TODO"
+
+        return render_template("librarian/book_search.html", person_id=student["person_id"], role="student")
+    
+    elif person_role == "staff":
+        return render_template("librarian/book_search.html", person_id=request.form.get("id"), role="staff")
+    
+    # If a person has been chosen display the search form for the book
+    elif person_role == "choose_book":
+        search_keys = {}
+
+        # Check which values were used in the search
+        for key in request.form:
+            if key in ["person_id", "person_role"]:
+                continue
+            if request.form.get(key) not in ["", None]:
+                search_keys[key] = request.form.get(key).strip()
+
+        # Generate the query to select relevant students
+        beginning = "SELECT * FROM books WHERE "
+        conditions = "quantity > 0"
+        for key in search_keys:
+            conditions += " AND "
+            conditions += key + " LIKE ?"
+
+        # Query the database to get the relevant students
+        cursor.execute(beginning + conditions, ["%" + item + "%" for item in search_keys.values()])
+        books = cursor.fetchall()
+
+        # Build a dictionary of extra info to submit with the chosen book
+        extra_info = {}
+        extra_info["person_id"] = request.form.get("person_id")
+        extra_info["person_role"] = request.form.get("person_role")
+
+        return render_template("librarian/book_results.html", books=books, extra_info=extra_info, action="/process_borrow/record", title="Choose Book")
+    
+    # If a book has been chosen, record the transaction
+    elif person_role == "record":
+        # Get the date of the borrow and the date before which the book must be returned
+        borrow_date = date.today()
+        expected_date = borrow_date + timedelta(days=7)
+
+        # Record the transaction in the borrows table
+        cursor.execute(
+            "INSERT INTO borrows (book_id, person_id, person_role, date_borrowed) VALUES (?, ?, ?, ?)",
+            (request.form.get("book_id"), request.form.get("person_id"), request.form.get("person_role"), borrow_date.isoformat())
+        )
+        
+        # Reduce the count of the book in the inventory
+        cursor.execute("UPDATE books SET quantity = quantity - 1 WHERE id = ?", (request.form.get("book_id")))
+
+        # Get the borrow id
+        borrow_id = cursor.lastrowid
+
+        # Record the borrow as unreturned
+        cursor.execute(
+            "INSERT INTO unreturned (borrow_id, date_expected) VALUES (?, ?)",
+            (borrow_id, expected_date.isoformat())
+        )
+
+        connection.commit()
+
+        return redirect("/")
+    
+    else:
+        return redirect("/borrow")
 
 
 @app.route("/return")

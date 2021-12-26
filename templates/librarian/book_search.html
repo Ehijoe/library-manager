@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Find Book{% endblock %}
+
+{% block body %}
+    <form action="/process_borrow/choose_book" method="post">
+        <input autocomplete="off" class="form-control" name="title" placeholder="Title" type="text">
+        <input autocomplete="off" class="form-control" name="author" placeholder="Author" type="text">
+        <input class="form-control" name="publication_date" type="date">
+        <input autocomplete="off" class="form-control" name="category" placeholder="Category" type="text">
+        <input type="hidden" name="person_role" value="{{role}}">
+        <button class="btn btn-primary" name="person_id" value="{{person_id}}" type="submit">Find Book</button>
+    </form>
+{% endblock %}
