@@ -40,6 +40,7 @@ CREATE TABLE borrows (
     id INTEGER PRIMARY KEY NOT NULL,
     book_id INT NOT NULL,
     person_id INT NOT NULL,
+    person_role TEXT NOT NULL,
     date_borrowed TEXT NOT NULL,
     date_returned TEXT
 );

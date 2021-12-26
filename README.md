@@ -107,6 +107,7 @@ It's columns are:
 - **id:** Primary key
 - **book_id:** A foreign key to identify the book being borrowed
 - **person_id:** A foreign key to identify the person borrowing the book
+- **person_role:** Whether the person was a member of staff or a student when the book was borrowed
 - **date_borrowed:** uses the ISO8601 date format
 - **date_returned** uses the ISO8601 date format. If the book is not returned, the value is NULL
 
