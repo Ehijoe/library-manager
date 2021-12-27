@@ -503,7 +503,7 @@ def process_borrow(person_role):
         return render_template("librarian/book_search.html", person_id=student["person_id"], role="student")
     
     elif person_role == "staff":
-        return render_template("librarian/book_search.html", person_id=request.form.get("id"), role="staff")
+        return render_template("librarian/book_search.html", action="/process_borrow/choose_book", person_id=request.form.get("id"), role="staff")
     
     # If a person has been chosen display the search form for the book
     elif person_role == "choose_book":
@@ -631,10 +631,45 @@ def return_book():
         action="/return")
 
 
-@app.route("/damage")
+@app.route("/damage", methods=["POST", "GET"])
 @is_librarian
 def damage():
-    return "TODO"
+    # If it is a get request display a search page
+    if request.method == "POST":
+        search_keys = {}
+
+        # Check which values were used in the search
+        for key in request.form:
+            if key in ["person_id", "person_role"]:
+                continue
+            if request.form.get(key) not in ["", None]:
+                search_keys[key] = request.form.get(key).strip()
+
+        # Generate the query to select relevant students
+        beginning = "SELECT * FROM books WHERE "
+        conditions = "quantity > 0"
+        for key in search_keys:
+            conditions += " AND "
+            conditions += key + " LIKE ?"
+
+        # Query the database to get the relevant students
+        cursor.execute(beginning + conditions, ["%" + item + "%" for item in search_keys.values()])
+        books = cursor.fetchall()
+
+        # There's no extra info to pass to the template
+        extra_info = {}
+
+        return render_template("librarian/book_results.html", books=books, extra_info=extra_info, action="/process_damage", title="Report Damage")
+    
+    return render_template("librarian/book_search.html", action="/damage")
+
+
+@app.route("/process_damage", methods=["POST"])
+def process_damage():
+    cursor.execute("UPDATE books SET quantity = quantity - 1 WHERE id = ?", (request.form.get("book_id")))
+    cursor.execute("INSERT INTO damaged (book_id, report_date) VALUES (?, ?)", (request.form.get("book_id"), date.today().isoformat()))
+    connection.commit()
+    return redirect("/")
 
 
 @app.route("/about")
