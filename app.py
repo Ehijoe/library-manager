@@ -672,6 +672,12 @@ def process_damage():
     return redirect("/")
 
 
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/login")
+
+
 @app.route("/about")
 def about():
     return "TODO!"
