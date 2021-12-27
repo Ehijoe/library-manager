@@ -64,6 +64,51 @@ def is_librarian(f):
     return decorated_function
 
 
+def get_unreturned(title, action):
+    "Returns a rendered template with a list of unreturned books"
+    # Get the borrow information for students
+    query = """SELECT admission_no,
+            first_name,
+            middle_name,
+            surname,
+            class,
+            title,
+            author,
+            date_expected,
+            borrow_id
+            FROM borrows
+            JOIN people ON borrows.person_id = people.id
+            JOIN students ON borrows.person_id = students.person_id
+            JOIN books ON borrows.book_id = books.id
+            JOIN unreturned ON borrows.id = unreturned.borrow_id"""
+    cursor.execute(query)
+    student_borrows = cursor.fetchall()
+
+    # Get the borrow information for staff
+    query = """SELECT first_name,
+            middle_name,
+            surname,
+            job_title,
+            title,
+            author,
+            date_expected,
+            borrow_id
+            FROM borrows
+            JOIN people ON borrows.person_id = people.id
+            JOIN staff ON borrows.person_id = staff.person_id
+            JOIN books ON borrows.book_id = books.id
+            JOIN unreturned ON borrows.id = unreturned.borrow_id"""
+    cursor.execute(query)
+    staff_borrows = cursor.fetchall()
+
+    return render_template(
+        "unreturned.html",
+        title=title,
+        student_borrows=student_borrows,
+        staff_borrows=staff_borrows,
+        action=action)
+
+
 @app.template_filter("heading_filter")
 def heading_filter(heading: str) -> str:
     "A filter that formats headings by replacing underscores with spaces and capitalizing every word."
@@ -370,9 +415,21 @@ def users(action=None):
         return "TODO: Invalid action"
 
 
-@app.route("/reports")
+@app.route("/reports", defaults={"report": None})
+@app.route("/reports/<report>")
 @is_admin
-def reports():
+def reports(report):
+    if report is None:
+        return render_template("admin/reports.html")
+    
+    elif report == "unreturned":
+        return get_unreturned(title="Unreturned Books", action=None)
+    
+    elif "damaged" in report:
+        cursor.execute("SELECT * FROM damaged JOIN books ON damaged.book_id = books.id ORDER BY report_date DESC LIMIT 100")
+        damaged_books = cursor.fetchall()
+        return render_template("admin/damage_report.html", books=damaged_books)
+
     return "TODO"
 
 
@@ -587,48 +644,7 @@ def return_book():
         return redirect("/return")
 
     # If it is a get request display a list of all unreturned books
-
-    # Get the borrow information for students
-    query = """SELECT admission_no,
-            first_name,
-            middle_name,
-            surname,
-            class,
-            title,
-            author,
-            date_expected,
-            borrow_id
-            FROM borrows
-            JOIN people ON borrows.person_id = people.id
-            JOIN students ON borrows.person_id = students.person_id
-            JOIN books ON borrows.book_id = books.id
-            JOIN unreturned ON borrows.id = unreturned.borrow_id"""
-    cursor.execute(query)
-    student_borrows = cursor.fetchall()
-
-    # Get the borrow information for staff
-    query = """SELECT first_name,
-            middle_name,
-            surname,
-            job_title,
-            title,
-            author,
-            date_expected,
-            borrow_id
-            FROM borrows
-            JOIN people ON borrows.person_id = people.id
-            JOIN staff ON borrows.person_id = staff.person_id
-            JOIN books ON borrows.book_id = books.id
-            JOIN unreturned ON borrows.id = unreturned.borrow_id"""
-    cursor.execute(query)
-    staff_borrows = cursor.fetchall()
-
-    return render_template(
-        "unreturned.html",
-        title="Return",
-        student_borrows=student_borrows,
-        staff_borrows=staff_borrows,
-        action="/return")
+    return get_unreturned(title="Return", action="/return")
 
 
 @app.route("/damage", methods=["POST", "GET"])

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Damage Report{% endblock %}
+
+{% block body %}
+    {% if books|length > 0 %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Publication Date</th>
+                <th>Date Reported</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for book in books %}
+                <tr>
+                    <td>{{ book["title"] }}</td>
+                    <td>{{ book["author"] }}</td>
+                    <td>{{ book["publication_date"] }}</td>
+                    <td>{{ book["report_date"] }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p class="alert alert-secondary" role="alert">No Damaged Books</p>
+    {% endif %}
+{% endblock %}
