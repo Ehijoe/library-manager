@@ -3,6 +3,7 @@ from sqlite3.dbapi2 import Cursor
 from flask import Flask, session, render_template, redirect, request, url_for
 import sqlite3
 import os
+from flask.templating import Environment
 from werkzeug.security import check_password_hash, generate_password_hash
 from functools import wraps
 from datetime import date, timedelta
@@ -61,6 +62,14 @@ def is_librarian(f):
             return redirect("/login")
         return f(*args, **kwargs)
     return decorated_function
+
+
+@app.template_filter("heading_filter")
+def heading_filter(heading: str) -> str:
+    "A filter that formats headings by replacing underscores with spaces and capitalizing every word."
+    words = heading.split("_")
+    words = [word.capitalize() for word in words]
+    return " ".join(words)
 
 
 @app.route("/")
@@ -557,10 +566,69 @@ def process_borrow(person_role):
         return redirect("/borrow")
 
 
-@app.route("/return")
+@app.route("/return", methods=["GET", "POST"])
 @is_librarian
 def return_book():
-    return "TODO"
+    if request.method == "POST":
+        # Update the book count
+        cursor.execute("SELECT book_id FROM borrows WHERE id = ?", (request.form.get("borrow_id")))
+        book_id = cursor.fetchone()["book_id"]
+        cursor.execute("UPDATE books SET quantity = quantity + 1 WHERE id = ?", (book_id,))
+
+        # Remove the borrow from the unreturned table
+        cursor.execute("DELETE FROM unreturned WHERE borrow_id = ?", (request.form.get("borrow_id")))
+
+        # Record the date of the return
+        return_date = date.today().isoformat()
+        cursor.execute("UPDATE borrows SET date_returned = ? WHERE id = ?", (return_date, request.form.get("borrow_id")))
+
+        connection.commit()
+
+        return redirect("/return")
+
+    # If it is a get request display a list of all unreturned books
+
+    # Get the borrow information for students
+    query = """SELECT admission_no,
+            first_name,
+            middle_name,
+            surname,
+            class,
+            title,
+            author,
+            date_expected,
+            borrow_id
+            FROM borrows
+            JOIN people ON borrows.person_id = people.id
+            JOIN students ON borrows.person_id = students.person_id
+            JOIN books ON borrows.book_id = books.id
+            JOIN unreturned ON borrows.id = unreturned.borrow_id"""
+    cursor.execute(query)
+    student_borrows = cursor.fetchall()
+
+    # Get the borrow information for staff
+    query = """SELECT first_name,
+            middle_name,
+            surname,
+            job_title,
+            title,
+            author,
+            date_expected,
+            borrow_id
+            FROM borrows
+            JOIN people ON borrows.person_id = people.id
+            JOIN staff ON borrows.person_id = staff.person_id
+            JOIN books ON borrows.book_id = books.id
+            JOIN unreturned ON borrows.id = unreturned.borrow_id"""
+    cursor.execute(query)
+    staff_borrows = cursor.fetchall()
+
+    return render_template(
+        "unreturned.html",
+        title="Return",
+        student_borrows=student_borrows,
+        staff_borrows=staff_borrows,
+        action="/return")
 
 
 @app.route("/damage")

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}{{title}}{% endblock %}
+
+{% block body %}
+    <h2>Students</h2>
+    {% if student_borrows|length > 0 %}
+    <table class="table">
+        <thead>
+            <tr>
+                {% for heading in student_borrows[0].keys() %}
+                {% if heading != "borrow_id" %}
+                <th>{{heading|heading_filter}}</th>
+                {% endif %}
+                {% endfor %}
+                {% if action %}<th></th>{% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for borrow in student_borrows %}
+                <tr>
+                    {% for heading in borrow.keys() %}
+                    {% if heading != "borrow_id" %}
+                        <td>{{borrow[heading]}}</td>
+                    {% endif %}
+                    {% endfor %}
+                    {% if action %}
+                    <td>
+                        <form action="{{action}}" method="post">
+                            <button name="borrow_id" value="{{borrow['borrow_id']}}" class="btn btn-danger" type="submit">{{title}}</button>
+                        </form>
+                    </td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p class="alert alert-secondary" role="alert">No Unreturned Books</p>
+    {% endif %}
+
+    <br>
+
+    <h2>Staff</h2>
+    {% if staff_borrows|length > 0 %}
+    <table class="table">
+        <thead>
+            <tr>
+                {% for heading in staff_borrows[0].keys() %}
+                {% if heading != 'borrow_id' %}
+                    <th>{{heading|heading_filter}}</th>
+                {% endif %}
+                {% endfor %}
+                {% if action %}<th></th>{% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for borrow in staff_borrows %}
+                <tr>
+                    {% for heading in borrow.keys() %}
+                    {% if heading != 'borrow_id' %}
+                        <td>{{borrow[heading]}}</td>
+                    {% endif %}
+                    {% endfor %}
+                    {% if action %}
+                    <td>
+                        <form action="{{action}}" method="post">
+                            <button name="borrow_id" value="{{borrow['borrow_id']}}" class="btn btn-danger" type="submit">{{title}}</button>
+                        </form>
+                    </td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p class="alert alert-secondary" role="alert">No Unreturned Books</p>
+    {% endif %}
+{% endblock %}
