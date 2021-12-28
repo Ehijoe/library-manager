@@ -8,14 +8,71 @@
         <title>Library Manager: {% block title %}{% endblock %}</title>
     </head>
     <body>
-        <!-- TODO: Navbar -->
+        <!-- Navbar -->
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <a class="navbar-brand" href="/">Library Manager</a>
-            <ul class="navbar-nav mr-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="/about">About</a>
-                </li>
-            </ul>
+            <div class="container-fluid">
+
+                <a class="navbar-brand" href="/">Library Manager</a>
+                
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <!-- Admin Navbar -->
+                    {% if session.get("role") == "admin" %}
+                        <ul class="navbar-nav me-auto">
+                            <li class="nav-item">
+                                <a class="nav-link {% if url_for(request.endpoint) == '/' %}active{% endif %}" href="/">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if url_for(request.endpoint) == '/students' %}active{% endif %}" href="/students">Students</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if url_for(request.endpoint) == '/staff' %}active{% endif %}" href="/staff">Staff</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if url_for(request.endpoint) == '/users' %}active{% endif %}" href="/users">Users</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if url_for(request.endpoint) == '/reports' %}active{% endif %}" href="/reports">Reports</a>
+                            </li>
+                        </ul>
+                    {% endif %}
+
+                    <!-- Librarian Navbar -->
+                    {% if session.get("role") == "librarian" %}
+                        <ul class="navbar-nav me-auto">
+                            <li class="nav-item">
+                                <a class="nav-link {% if url_for(request.endpoint) == '/' %}active{% endif %}" href="/">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if url_for(request.endpoint) == '/add_book' %}active{% endif %}" href="/add_book">Add Book</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if url_for(request.endpoint) == '/borrow' %}active{% endif %}" href="/borrow">Borrow</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if url_for(request.endpoint) == '/return' %}active{% endif %}" href="/return">Return</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if url_for(request.endpoint) == '/damage' %}active{% endif %}" href="/damage">Report Damage</a>
+                            </li>
+                        </ul>
+                    {% endif %}
+
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/about">About</a>
+                        </li>
+                        {% if session.get("role") %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/logout">Logout</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
         </nav>
 
         <main class="container p-5">
