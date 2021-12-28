@@ -1,6 +1,7 @@
 # Import external libraries
+import re
 from sqlite3.dbapi2 import Cursor
-from flask import Flask, session, render_template, redirect, request, url_for
+from flask import Flask, session, render_template, redirect, request, url_for, flash
 import sqlite3
 import os
 from flask.templating import Environment
@@ -15,7 +16,7 @@ app.secret_key = b"21#$^7isdg843!^#49dcmge394gn4390" # TODO: store as an environ
 db = "library.sqlite"
 
 # Global variables
-CLASSES = ("Pre Basic 7", "Basic7", "Basic 8", "Basic 9", "SS 1", "SS 2", "SS 3")
+CLASSES = ("Pre Basic 7", "Basic 7", "Basic 8", "Basic 9", "SS 1", "SS 2", "SS 3")
 ROLES = {"librarian":"Librarian", "admin":"Administrator"}
 
 
@@ -109,6 +110,18 @@ def get_unreturned(title, action):
         action=action)
 
 
+@app.context_processor
+def my_utility_processor():
+
+    def get_url(*args, **kwargs):
+        try:
+            return url_for(*args, **kwargs)
+        except:
+            return None
+    
+    return dict(get_url=get_url)
+
+
 @app.template_filter("heading_filter")
 def heading_filter(heading: str) -> str:
     "A filter that formats headings by replacing underscores with spaces and capitalizing every word."
@@ -130,12 +143,15 @@ def index():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    session.clear()
+    session.pop("user_id", None)
+    session.pop("role", None)
 
     if request.method == "POST":
         if request.form.get("username") in [None, ""]:
+            flash("You must enter a username", "danger")
             return redirect("/login")
         if request.form.get("password") in [None, ""]:
+            flash("You must enter a password!", "danger")
             return redirect("/login")
 
         # Check if the login is valid
@@ -146,9 +162,11 @@ def login():
 
         # If the user is not registered, return an error
         if row == None:
+            flash("Invalid Username or Password!", "danger")
             return redirect("/login")
 
         if not check_password_hash(row["password_hash"], password):
+            flash("Invalid Username or Password!", "danger")
             return redirect("/login")
 
         # Update the user's session
@@ -173,7 +191,8 @@ def students(action=None):
             # Check if the required fields were given
             for key in ["admission_no", "firstname", 'middlename', 'surname', 'birthdate', 'class']:
                 if request.form[key] in ("", None):
-                    return "TODO: Error"
+                    flash("You must fill all fields!", "warning")
+                    return redirect("/students/add")
                 else:
                     form[key] = request.form[key].strip()
             
@@ -183,11 +202,13 @@ def students(action=None):
                 if form["admission_no"] <= 0:
                     raise ValueError
             except ValueError:
-                return "TODO: Error"
+                flash("Invalid Admission Number!", "danger")
+                return redirect("/students/add")
 
             # Check if the class is a valid class
             if form["class"] not in CLASSES:
-                return "TODO: Error"
+                flash("Invalid Class!", "danger")
+                return redirect("/students/add")
 
             # Check if there is a person with the same name
             cursor.execute("SELECT id FROM people WHERE first_name LIKE ? and surname LIKE ?", (request.form["firstname"], request.form["surname"]))
@@ -207,6 +228,7 @@ def students(action=None):
                 (form["admission_no"], person_id, form["class"], form["class"]))
             connection.commit()
 
+            flash("Student Successfully Added!", "success")
             return redirect("/students/add")
         
         if action == "remove":
@@ -239,8 +261,9 @@ def students(action=None):
             return render_template("student_results.html", students=students, action="/students/delete", title="Remove Student")
         
         if action == "delete":
-            cursor.execute("UPDATE students SET class = 'Retired' WHERE admission_no = ?", request.form["admission_no"])
+            cursor.execute("UPDATE students SET class = 'Retired' WHERE admission_no = ?", (request.form["admission_no"],))
             connection.commit()
+            flash("Student Deleted!", "warning")
             return redirect("/")
 
     # If it is a get request determine which form to show
@@ -251,7 +274,8 @@ def students(action=None):
     elif action == "remove":
         return render_template("student_search.html", classes=CLASSES, title="Remove Student", action="/students/remove")
     else:
-        return "TODO: Invalid action"
+        flash("Invalid Action!", "warning")
+        return redirect("/students")
 
 
 @app.route("/staff", defaults={"action": "choose"})
@@ -266,7 +290,8 @@ def staff(action=None):
             # Check if the required fields were given
             for key in ["firstname", 'middlename', 'surname', 'birthdate', 'job_title']:
                 if request.form[key] in ("", None):
-                    return "TODO: Error"
+                    flash("You must fill all the fields!", "warning")
+                    return redirect("/staff/add")
                 else:
                     form[key] = request.form[key].strip()
 
@@ -290,6 +315,7 @@ def staff(action=None):
                 cursor.execute("""INSERT INTO staff (person_id, job_title) VALUES (?, ?)""", (person_id, form["job_title"]))
             connection.commit()
 
+            flash("Staff Successfully Added", "success")
             return redirect("/staff/add")
         
         if action == "remove":
@@ -316,6 +342,7 @@ def staff(action=None):
         if action == "delete":
             cursor.execute("UPDATE staff SET job_title = 'Retired' WHERE person_id = ?", request.form["id"])
             connection.commit()
+            flash("Staff Successfully Deleted!", "warning")
             return redirect("/")
 
     # If it is a get request determine which form to show
@@ -326,7 +353,8 @@ def staff(action=None):
     elif action == "remove":
         return render_template("staff_search.html", title="Remove Staff", action="/staff/remove")
     else:
-        return "TODO: Invalid action"
+        flash("Invalid Action!", "warning")
+        return redirect("/staff")
 
 
 @app.route("/users", defaults={"action": "choose"})
@@ -368,23 +396,29 @@ def users(action=None):
                     user_info[key] = request.form[key].strip()
             
             # Check if the person id is available
-            if request.form.get("id") is None:
+            if request.form.get("id") in (None, ""):
+                flash("User could not be added!", "danger")
                 return redirect("/users/add")
             else:
                 user_info["id"] = request.form.get("id")
             
             # Check if the password matches the confirmation
             if user_info["password"] != user_info["confirmation"]:
-                return "TODO"
+                flash("Password does not match Confirmation!", "warning")
+                return render_template("admin/add_user.html", id=request.form["id"], roles=ROLES)
 
-            # Check if the person is already a user
-            cursor.execute("SELECT * FROM users WHERE person_id = ?", user_info["id"])
-            if cursor.fetchone():
-                return redirect("/")
-            
             # Check if the person chose a valid role
             if user_info["role"] not in ROLES:
-                return "TODO"
+                flash("Invalid Role Selected", "danger")
+                return render_template("admin/add_user.html", id=request.form["id"], roles=ROLES)
+
+            # Check if the person is already a user
+            cursor.execute("SELECT * FROM users WHERE person_id = ?", (user_info["id"],))
+            if cursor.fetchone():
+                cursor.execute("UPDATE users SET user_role = ? WHERE person_id = ?", (user_info["role"], user_info["id"]))
+                connection.commit()
+                flash("User Already Exists! User role has been updated.", "warning")
+                return redirect("/")
 
             # Add the user to the database
             password_hash = generate_password_hash(user_info["password"])
@@ -393,14 +427,17 @@ def users(action=None):
                 (user_info["username"], password_hash, user_info["role"], user_info["id"]))
             connection.commit()
 
+            flash("User Successfully Added!", "success")
             return redirect("/")
         
         if action == "remove":
             cursor.execute("DELETE FROM users WHERE person_id = ?", request.form.get("id"))
             connection.commit()
+            flash("User Successfully Removed!", "warning")
             return redirect("/users/remove")
         
-        return "TODO"
+        flash("Invalid Action!", "danger")
+        return redirect("/users")
 
     # If it is a get request determine which form to show
     if action == "choose":
@@ -412,7 +449,8 @@ def users(action=None):
         user_list = cursor.fetchall()
         return render_template("admin/user_list.html", users=user_list, title="Delete User", action="/users/remove", roles=ROLES)
     else:
-        return "TODO: Invalid action"
+        flash("Invalid Action!", "danger")
+        return redirect("/users")
 
 
 @app.route("/reports", defaults={"report": None})
@@ -430,7 +468,8 @@ def reports(report):
         damaged_books = cursor.fetchall()
         return render_template("admin/damage_report.html", books=damaged_books)
 
-    return "TODO"
+    flash("No such Report!", "danger")
+    return redirect("/reports")
 
 
 @app.route("/add_book", methods=["GET", "POST"])
@@ -440,7 +479,8 @@ def add_book():
         # Check if the necessary fields are present
         for key in ["title", "quantity"]:
             if request.form.get(key) in ["", None]:
-                return "TODO: Error"
+                flash("You must enter the Title and Number of copies!", "warning")
+                return redirect("/add_book")
         
         # Create a form_dictionary with cleaned up values
         form = {}
@@ -459,7 +499,8 @@ def add_book():
         try:
             form["quantity"] = int(form.get("quantity"))
         except ValueError:
-            return "TODO: Error"
+            flash("You entered an invalid Number of Copies!", "danger")
+            return redirect("/add_book")
         
         # Add the book into the database
         cursor.execute(
@@ -467,6 +508,7 @@ def add_book():
             [form.get(key) for key in ("title", "author", "publication_date", "quantity", "category", "reference")])
         connection.commit()
 
+        flash("Book Added Successfully!", "success")
         return redirect("/add_book")
     
     # If it is a get request display a form to add the book
@@ -488,7 +530,8 @@ def borrow(person):
         if person == "choose":
             return render_template("librarian/borrow.html")
         
-        return "TODO"
+        flash("Invalid Path!", "danger")
+        return redirect("/")
     
     # If it is a post request display a page to find the book
     else:
@@ -543,7 +586,8 @@ def borrow(person):
             return render_template("student_results.html", students=students, action="/process_borrow/student", title="Choose Student")
         
         else:
-            return "TODO"
+            flash("Invalid Path!", "danger")
+            return redirect("/")
 
 
 @app.route("/process_borrow/<person_role>", methods=["POST"])
@@ -551,13 +595,14 @@ def borrow(person):
 def process_borrow(person_role):
     if person_role == "student":
         # Get the student's person_id
-        cursor.execute("SELECT person_id FROM students WHERE admission_no = ?", request.form.get("admission_no"))
+        cursor.execute("SELECT person_id FROM students WHERE admission_no = ?", (request.form.get("admission_no"), ))
         student = cursor.fetchone()
 
         if not student:
-            return "TODO"
+            flash("Student Not Found!", "danger")
+            return redirect("/borrow")
 
-        return render_template("librarian/book_search.html", person_id=student["person_id"], role="student")
+        return render_template("librarian/book_search.html", action="/process_borrow/choose_book", person_id=student["person_id"], role="student")
     
     elif person_role == "staff":
         return render_template("librarian/book_search.html", action="/process_borrow/choose_book", person_id=request.form.get("id"), role="staff")
@@ -575,7 +620,7 @@ def process_borrow(person_role):
 
         # Generate the query to select relevant students
         beginning = "SELECT * FROM books WHERE "
-        conditions = "quantity > 0"
+        conditions = "reference = 0 AND quantity > 0"
         for key in search_keys:
             conditions += " AND "
             conditions += key + " LIKE ?"
@@ -617,9 +662,11 @@ def process_borrow(person_role):
 
         connection.commit()
 
+        flash("Borrow Recorded!", "success")
         return redirect("/")
     
     else:
+        flash("Invalid Action!", "danger")
         return redirect("/borrow")
 
 
@@ -641,6 +688,7 @@ def return_book():
 
         connection.commit()
 
+        flash("Book Returned Successfully!", "success")
         return redirect("/return")
 
     # If it is a get request display a list of all unreturned books
@@ -685,18 +733,21 @@ def process_damage():
     cursor.execute("UPDATE books SET quantity = quantity - 1 WHERE id = ?", (request.form.get("book_id")))
     cursor.execute("INSERT INTO damaged (book_id, report_date) VALUES (?, ?)", (request.form.get("book_id"), date.today().isoformat()))
     connection.commit()
+    flash("Damage Recorded!", "success")
     return redirect("/")
 
 
 @app.route("/logout")
 def logout():
     session.clear()
+    flash("Logged Out!", "success")
     return redirect("/login")
 
 
 @app.route("/about")
 def about():
-    return "TODO!"
+    flash("There isn't really much to say!", "secondary")
+    return redirect("/")
 
 
 if __name__ == "__main__":

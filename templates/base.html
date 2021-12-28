@@ -3,8 +3,8 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
-        <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+        <link rel="stylesheet" href="{{ get_url('static', filename='css/bootstrap.min.css') }}">
+        <script src="{{ get_url('static', filename='js/bootstrap.bundle.min.js') }}"></script>
         <title>Library Manager: {% block title %}{% endblock %}</title>
     </head>
     <body>
@@ -23,19 +23,19 @@
                     {% if session.get("role") == "admin" %}
                         <ul class="navbar-nav me-auto">
                             <li class="nav-item">
-                                <a class="nav-link {% if url_for(request.endpoint) == '/' %}active{% endif %}" href="/">Home</a>
+                                <a class="nav-link {% if get_url(request.endpoint) == '/' %}active{% endif %}" href="/">Home</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {% if url_for(request.endpoint) == '/students' %}active{% endif %}" href="/students">Students</a>
+                                <a class="nav-link {% if get_url(request.endpoint) == '/students' %}active{% endif %}" href="/students">Students</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {% if url_for(request.endpoint) == '/staff' %}active{% endif %}" href="/staff">Staff</a>
+                                <a class="nav-link {% if get_url(request.endpoint) == '/staff' %}active{% endif %}" href="/staff">Staff</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {% if url_for(request.endpoint) == '/users' %}active{% endif %}" href="/users">Users</a>
+                                <a class="nav-link {% if get_url(request.endpoint) == '/users' %}active{% endif %}" href="/users">Users</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {% if url_for(request.endpoint) == '/reports' %}active{% endif %}" href="/reports">Reports</a>
+                                <a class="nav-link {% if get_url(request.endpoint) == '/reports' %}active{% endif %}" href="/reports">Reports</a>
                             </li>
                         </ul>
                     {% endif %}
@@ -44,19 +44,19 @@
                     {% if session.get("role") == "librarian" %}
                         <ul class="navbar-nav me-auto">
                             <li class="nav-item">
-                                <a class="nav-link {% if url_for(request.endpoint) == '/' %}active{% endif %}" href="/">Home</a>
+                                <a class="nav-link {% if get_url(request.endpoint) == '/' %}active{% endif %}" href="/">Home</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {% if url_for(request.endpoint) == '/add_book' %}active{% endif %}" href="/add_book">Add Book</a>
+                                <a class="nav-link {% if get_url(request.endpoint) == '/add_book' %}active{% endif %}" href="/add_book">Add Book</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {% if url_for(request.endpoint) == '/borrow' %}active{% endif %}" href="/borrow">Borrow</a>
+                                <a class="nav-link {% if get_url(request.endpoint) == '/borrow' %}active{% endif %}" href="/borrow">Borrow</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {% if url_for(request.endpoint) == '/return' %}active{% endif %}" href="/return">Return</a>
+                                <a class="nav-link {% if get_url(request.endpoint) == '/return' %}active{% endif %}" href="/return">Return</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {% if url_for(request.endpoint) == '/damage' %}active{% endif %}" href="/damage">Report Damage</a>
+                                <a class="nav-link {% if get_url(request.endpoint) == '/damage' %}active{% endif %}" href="/damage">Report Damage</a>
                             </li>
                         </ul>
                     {% endif %}
@@ -76,7 +76,25 @@
         </nav>
 
         <main class="container p-5">
+
+            <h1>{{self.title()}}</h1>
+
+            <br>
+
             {% block body %}{% endblock %}
+
         </main>
+
+        <footer class="container">
+            <!-- Display flashed messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+            {% endwith %}
+        </footer>
     </body>
 </html>
