@@ -21,7 +21,8 @@ Administrators can:
 - [x] Remove staff who no longer work in the school [^1]
 - [x] Add new users
 - [x] Delete existing users
-- [ ] View some reports
+- [x] View Unreturned books
+- [x] View Damaged books
 
 ## Librarian
 
@@ -29,11 +30,11 @@ A librarian who can records all borrowed books.
 
 Librarians can:
 
-- [ ] View a list of unreturned books
-- [ ] Record a new borrow transaction
-- [ ] Record the return of a book
-- [ ] Report a book as damaged or lost
-- [ ] Add new books to the inventory
+- [x] View a list of unreturned books [^2]
+- [x] Record a new borrow transaction
+- [x] Record the return of a book
+- [x] Report a book as damaged or lost
+- [x] Add new books to the inventory
 
 ------------
 
@@ -137,6 +138,172 @@ The css and javascript files used in the project are stored in this folder.
 
 This folder contains the html templates used in the project.
 
+### Both Users
+
+#### base.html
+
+This is the base template that all other templates inherit from. It links the bootstrap css and javascript files. It has two blocks:
+
+- title: This contains the title to be displayed in the title head element and in a heading tag in the main body.
+
+- body: This is the main content of the page.
+
+It also includes a navbar for easy navigation that changes depending on the role of the user logged in.
+
+It has a footer that displays dismissible flashed messages as alerts.
+
+#### login.html
+
+This template contains the login form. It submits to the `/login` route.
+
+#### staff_search.html
+
+This template contains a form that could be used to search for a member of staff. It takes two variables:
+
+- title: The Title of the page to be displayed.
+- action: The route that the form is submitted to.
+
+#### staff_results.html
+
+This template displays a list of staff, each with a button to carry out some action. The button submits the `person_id` of the member of staff to a specified route. It takes the variables:
+
+- title: The title of the page to be displayed. It also serves as the label for the button.
+- staff: A list of the staff that are to be displayed.
+- action: The route to which the selected `person_id` will be submitted to.
+
+#### student_search.html
+
+This template contains a form that could be used to search for a student. It takes two variables:
+
+- title: The Title of the page to be displayed.
+- action: The route that the form is submitted to.
+- classes: A list of all the classes a student could be in.
+
+#### student_results.html
+
+This template displays a list of students, each with a button to carry out some action. The button submits the `admission_no` of the student to a specified route. It takes the variables:
+
+- title: The title of the page to be displayed. It also serves as the label for the button.
+- staff: A list of the staff that are to be displayed.
+- action: The route to which the selected `admission_no` will be submitted to.
+
+#### unreturned.html
+
+This template displays a list of unreturned books and optionally a button submits the `borrow_id` to a specified route. It takes the variables:
+
+- title: The title of the page to be displayed. It also serves as the label for the button if any.
+- action: The route to which the `borrow_id` will be submitted.
+- student_borrows: A list of information (in the form of a dictionary) about books borrowed by students.
+- staff_borrows: A list of information (in the form of a dictionary) about books borrowed by staff.
+
+### Admin Only
+
+#### add_staff.html
+
+This template displays a form for a member of staff to be added. The form is submitted to `/staff/add`.
+
+#### add_student.html
+
+This template displays a form for a student to be added. The form is submitted to `/students/add`. It takes the variable:
+
+- classes: A list of the classes a student can possibly be in.
+
+#### add_user.html
+
+This template displays a form for a user to be added. The form is submitted to `/users/add`. It takes the variable:
+
+- roles: A list of the roles a user can play.
+
+#### damage_report.html
+
+This template displays a list of books that have been reported to be damaged. It takes the variable:
+
+- books: A list of the books that were reported damaged along with the date it was reported.
+
+#### home.html (admin)
+
+This template shows a list of the actions the admin can take:
+
+- Manage Students `/students`
+- Manage Staff `/staff`
+- Manage Users `/users`
+- View Reports `/reports`
+
+#### reports.html
+
+A menu to select the reports to view:
+
+- Unreturned Books `/reports/unreturned`
+- Damage Report `/reports/damaged`
+
+#### staff.html
+
+A menu to select the action to carry out related to staff:
+
+- Add Staff `/staff/add`
+- Remove Staff `/staff/remove`
+
+#### student.html
+
+A menu to select the action to carry out related to students:
+
+- Add Student `/student/add`
+- Remove Student `/student/remove`
+
+#### users.html
+
+A menu to select the action to carry out related to users:
+
+- Add User `/users/add`
+- Remove Remove `/users/remove`
+
+#### user_list.html
+
+This template displays a list of users, each with a button to carry out some action. The button submits the `id` of the user to a specified route. It takes the variables:
+
+- title: The title of the page to be displayed. It also serves as the label for the button.
+- users: A list of the users that are to be displayed.
+- action: The route to which the selected `person_id` will be submitted to.
+
+### Librarian Only
+
+#### home.html (librarian)
+
+This template shows a list of the actions the admin can take:
+
+- Add Book `/add_book`
+- Borrow `/borrow`
+- Return `/return`
+- Report Damage `/damage`
+
+#### add_book.html
+
+This template diaplays a form for adding books to the inventory. It is submitted to `/add_book`.
+
+#### book_search.html
+
+This template displays a form for searching for a book. It takes the variables:
+
+- action: The route to which the form will be submitted.
+- role: If a person has previously been selected, this will be either 'staff' or 'student'.
+- person_id: If a person has previously been selected, this will be their `person_id`
+
+#### book_results.html
+
+This template displays a list of books along with a button that submits the `book_id` to a specified route. It's variables are:
+
+- title: The title of the page to be displayed. It also serves as the label for the button.
+- action: The route to which the form will be submitted.
+- books: The list of books to be displayed.
+- extra_info: A dictionary of extra information to be submitted alongside the `book_id`.
+
+#### borrow.html
+
+A menu to select the kind of person who is borrowing a book:
+
+- Student Borrow `/borrow/student`
+- Staff Borrow `/borrow/staff`
+
 ------------
 
 ## app.py
@@ -151,7 +318,9 @@ This folder contains the html templates used in the project.
 
 #### Database Connection
 
-An sqlite database called `library.sqlite` is connected to. If it was just created, then `schema.sql` is run.  A cursor to query the database is also created.
+An sqlite database called `library.sqlite` is connected to. If it was just created, then `schema.sql` is run. A cursor to query the database is also created.
+
+When the database is created, a test person is inserted and then linked to two users, 'admin' and 'librarian', both with the password 'test'.
 
 ### Supporting functions
 
@@ -159,8 +328,30 @@ An sqlite database called `library.sqlite` is connected to. If it was just creat
 
 This is a decorator to ensure that the user is an administrator. It checks the user's session to see if the role is set to `"admin"`.
 
+#### is_librarian
+
+This is a decorator to ensure that the user is an librarian. It checks the user's session to see if the role is set to `"librarian"`.
+
+#### get_unreturned
+
+It takes two arguments:
+
+- `title`: The title of the rendered page and the label of the button.
+- `action`: The route to which the button associated with each unreturned book submits data.
+
+Queries the database to get the list of unreturned books and using that returns a rendered `'unreturned.html'` template with the title, `title` which submits the form to `action`.
+
+#### get_url
+
+A replacement for `url_for` which returns `None` if a `BuildError` is encountered. This is necessary for url paths with variables not to break the `'base.html'` template.
+
+#### heading_filter
+
+A filter that formats headings by replacing underscores with spaces and capitalizing every word.
+
 ### Routes
 
 #### login
 
 [^1]: The students and staff aren't actually deleted to preserve records of the books they have borrowed.
+[^2]: The list of unreturned books is displayed in the page for returning books along with buttons to return the books.
