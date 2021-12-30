@@ -4,11 +4,11 @@
 
 {% block body %}
     <form action="{{action}}" method="post">
-        <input autocomplete="off" class="form-control" name="title" placeholder="Title" type="text">
-        <input autocomplete="off" class="form-control" name="author" placeholder="Author" type="text">
-        <input class="form-control" name="publication_date" type="date">
-        <input autocomplete="off" class="form-control" name="category" placeholder="Category" type="text">
-        <input type="hidden" name="person_role" value="{{role}}">
-        <button class="btn btn-primary" name="person_id" value="{{person_id}}" type="submit">Find Book</button>
+        <div class="mb-3"><input autocomplete="off" class="form-control" name="title" placeholder="Title" type="text"></div>
+        <div class="mb-3"><input autocomplete="off" class="form-control" name="author" placeholder="Author" type="text"></div>
+        <div class="mb-3"><input class="form-control" name="publication_date" type="date"></div>
+        <div class="mb-3"><input autocomplete="off" class="form-control" name="category" placeholder="Category" type="text"></div>
+        <div class="mb-3"><input type="hidden" name="person_role" value="{{role}}"></div>
+        <div class="mb-3"><button class="btn btn-primary" name="person_id" value="{{person_id}}" type="submit">Find Book</button></div>
     </form>
 {% endblock %}

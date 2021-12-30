@@ -4,15 +4,17 @@
 
 {% block body %}
     <form action="/users/add" method="post">
-        <input autocomplete="off" autofocus class="form-control" name="username" placeholder="Username" type="text">
-        <input class="form-control" name="password" placeholder="Password" type="password">
-        <input class="form-control" name="confirmation" placeholder="Password Confirmation" type="password">
-        <select name="role" class="form-control">
-            <option selected value="" disabled>Role</option>
-            {% for role in roles %}
-                <option value="{{role}}">{{roles[role]}}</option>
-            {% endfor %}
-        </select>
+        <div class="mb-3"><input autocomplete="off" autofocus class="form-control" name="username" placeholder="Username" type="text"></div>
+        <div class="mb-3"><input class="form-control" name="password" placeholder="Password" type="password"></div>
+        <div class="mb-3"><input class="form-control" name="confirmation" placeholder="Password Confirmation" type="password"></div>
+        <div class="mb-3">
+            <select name="role" class="form-control">
+                <option selected value="" disabled>Role</option>
+                {% for role in roles %}
+                    <option value="{{role}}">{{roles[role]}}</option>
+                {% endfor %}
+            </select>
+        </div>
         <button name="id" value="{{id}}" class="btn btn-primary" type="submit">Add User</button>
     </form>
 {% endblock %}
