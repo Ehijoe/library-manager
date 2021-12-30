@@ -351,7 +351,85 @@ A filter that formats headings by replacing underscores with spaces and capitali
 
 ### Routes
 
-#### login
+#### index (`/`)
+
+Renders the appropriate home page template depending on the role of the user. The user is redirected to the login page if not logged in.
+
+#### login (`/login`)
+
+- **GET:** Renders the login page.
+
+- **POST:** Checks the user's credentials and redirects to the index if they are correct. Otherwise the user is redirected back to the login.
+
+#### students (`/students/<action>`)
+
+The default value of `action` is 'choose'.
+
+- `/students/choose` displays a menu for choosing an action.
+
+- `/students/add` displays a form for entering the student's information. When the form is submitted, the data is validated and the student is added to the database.
+
+- `/students/remove` displays a form for searching for a student. The matching students are then displayed along with a button for submitting their `admission_no` to `/students/delete`.
+
+- `/students/delete` sets the `class` of the student whose `admission_no` was received to `'Retired'`.
+
+#### staff (`/staff/<action>`)
+
+The default value of `action` is 'choose'.
+
+- `/staff/choose` displays a menu for choosing an action.
+
+- `/staff/add` displays a form for entering the staff member's information. When the form is submitted, the data is validated and the staff member is added to the database.
+
+- `/staff/remove` displays a form for searching for a staff member. The matching staff are then displayed along with a button for submitting their `person_id` to `/staff/delete`.
+
+- `/staff/delete` sets the `job_title` of the staff member whose `person_id` was received to `'Retired'`.
+
+#### users (`/users/<action>`)
+
+The default value of `action` is 'choose'.
+
+- `/users/choose` displays a menu for choosing an action.
+
+- `/users/add` (GET) displays a form for searching for a staff member to add as a user. The form is submitted to `/users/add_list`.
+
+- `/users/add_list` (POST) displays a list of staff members that match the search. Buttons corresponding to each member of staff submit their `person_id` to `/users/add`.
+
+- `/users/add` (POST) displays a form that asks for the username, password and role of the user repeatedly until they are entered and submits to itself. When the details are entered, it enters the user into the database using the `person_id` supplied from `/users/add_list` and redirects the user to the home page.
+
+- `/users/remove` displays a list of the users currently registered along with buttons that submit the `person_id` of the user to itself. If a `person_id` is submitted to it, it deletes the user with that `person_id`.
+
+#### reports (`/reports/<report>`)
+
+A list of reports for the admin to see.
+
+#### add_book (`/add_book`)
+
+Displays a form for adding books which updates the database when submitted.
+
+#### borrow (`/borrow/<person>`)
+
+Allows the person who is borrowing the book to be searched for and submits the `person_id` or `admission_no` to process_borrow.
+
+#### process_borrow (`/process_borrow/<person_role>`)
+
+Records the borrow in the database and redirects to the home page.
+
+#### damage (`/damage`)
+
+Brings a form to search for the book that is damaged and generates a list of the books that meet the search criteria with buttons that the `book_id` submit to `/process_damage`.
+
+#### process_damage (`/process_damage`)
+
+Records the damage in the database and redirects to the home page.
+
+#### logout (`/logout`)
+
+Logs the user out and redirects to the login page.
+
+#### about (`/about`)
+
+Not yet done.
 
 [^1]: The students and staff aren't actually deleted to preserve records of the books they have borrowed.
 [^2]: The list of unreturned books is displayed in the page for returning books along with buttons to return the books.
