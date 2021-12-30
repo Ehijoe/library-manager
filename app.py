@@ -746,7 +746,8 @@ def logout():
 
 @app.route("/about")
 def about():
-    flash("There isn't really much to say!", "secondary")
+    flash("Created by Joseph Ehiagwina Alikah.", "secondary")
+    flash("Made in Irrua, Edo State, Nigeria.", "secondary")
     return redirect("/")
 
 

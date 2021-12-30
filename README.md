@@ -429,7 +429,7 @@ Logs the user out and redirects to the login page.
 
 #### about (`/about`)
 
-Not yet done.
+Displays some information about the creator
 
 [^1]: The students and staff aren't actually deleted to preserve records of the books they have borrowed.
 [^2]: The list of unreturned books is displayed in the page for returning books along with buttons to return the books.
