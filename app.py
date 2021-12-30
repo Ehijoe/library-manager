@@ -308,7 +308,7 @@ def staff(action=None):
                 person_id = person_id["id"]
 
             # Insert the new staff
-            cursor.execute("SELECT * FROM staff WHERE person_id = ?", str(person_id))
+            cursor.execute("SELECT * FROM staff WHERE person_id = ?", (str(person_id), ))
             if cursor.fetchone() != None:
                 cursor.execute("UPDATE staff SET job_title = ? WHERE person_id = ?", (form["job_title"], person_id))
             else:
