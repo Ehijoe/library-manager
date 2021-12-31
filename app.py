@@ -431,7 +431,7 @@ def users(action=None):
             return redirect("/")
         
         if action == "remove":
-            cursor.execute("DELETE FROM users WHERE person_id = ?", request.form.get("id"))
+            cursor.execute("DELETE FROM users WHERE person_id = ?", [request.form.get("id")])
             connection.commit()
             flash("User Successfully Removed!", "warning")
             return redirect("/users/remove")
@@ -649,7 +649,7 @@ def process_borrow(person_role):
         )
         
         # Reduce the count of the book in the inventory
-        cursor.execute("UPDATE books SET quantity = quantity - 1 WHERE id = ?", (request.form.get("book_id")))
+        cursor.execute("UPDATE books SET quantity = quantity - 1 WHERE id = ?", [request.form.get("book_id")])
 
         # Get the borrow id
         borrow_id = cursor.lastrowid
@@ -675,12 +675,12 @@ def process_borrow(person_role):
 def return_book():
     if request.method == "POST":
         # Update the book count
-        cursor.execute("SELECT book_id FROM borrows WHERE id = ?", (request.form.get("borrow_id")))
+        cursor.execute("SELECT book_id FROM borrows WHERE id = ?", (request.form.get("borrow_id"), ))
         book_id = cursor.fetchone()["book_id"]
         cursor.execute("UPDATE books SET quantity = quantity + 1 WHERE id = ?", (book_id,))
 
         # Remove the borrow from the unreturned table
-        cursor.execute("DELETE FROM unreturned WHERE borrow_id = ?", (request.form.get("borrow_id")))
+        cursor.execute("DELETE FROM unreturned WHERE borrow_id = ?", (request.form.get("borrow_id"), ))
 
         # Record the date of the return
         return_date = date.today().isoformat()
@@ -730,7 +730,7 @@ def damage():
 
 @app.route("/process_damage", methods=["POST"])
 def process_damage():
-    cursor.execute("UPDATE books SET quantity = quantity - 1 WHERE id = ?", (request.form.get("book_id")))
+    cursor.execute("UPDATE books SET quantity = quantity - 1 WHERE id = ?", [request.form.get("book_id")])
     cursor.execute("INSERT INTO damaged (book_id, report_date) VALUES (?, ?)", (request.form.get("book_id"), date.today().isoformat()))
     connection.commit()
     flash("Damage Recorded!", "success")
