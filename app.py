@@ -340,7 +340,7 @@ def staff(action=None):
             return render_template("staff_results.html", staff=staff, action="/staff/delete", title="Remove Staff")
         
         if action == "delete":
-            cursor.execute("UPDATE staff SET job_title = 'Retired' WHERE person_id = ?", request.form["id"])
+            cursor.execute("UPDATE staff SET job_title = 'Retired' WHERE person_id = ?", (request.form["id"], ))
             connection.commit()
             flash("Staff Successfully Deleted!", "warning")
             return redirect("/")
